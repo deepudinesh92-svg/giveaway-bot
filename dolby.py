@@ -3,9 +3,10 @@ from discord.ext import commands
 import asyncio
 import random
 import re
+import os
 
 # ---------- CONFIG ----------
-TOKEN = "token"   # Replace with your bot token
+TOKEN = os.getenv("DISCORD_TOKEN")  # Bot token from environment variable
 INTENTS = discord.Intents.default()
 INTENTS.message_content = True
 INTENTS.members = True
@@ -78,19 +79,18 @@ async def end_giveaway(interaction, message_id: int, auto=False):
         win_mentions = ", ".join(w.mention for w in winners)
         await giveaway["channel"].send(f"🎉 Congratulations {win_mentions}! You won **{giveaway['prize']}** 🎁")
 
-        # Send DM banner to each winner
+        # Send DM embed to each winner
         for w in winners:
             try:
-                banner = (
-                    "━━━━━━━━━━━━━━━\n"
-                    "🏆 **YOU WON THE GIVEAWAY!** 🏆\n\n"
-                    f"🎁 Prize: **{giveaway['prize']}**\n\n"
-                    "✨ Congratulations, enjoy your reward!\n"
-                    "━━━━━━━━━━━━━━━"
+                embed = discord.Embed(
+                    title="🏆 YOU WON THE GIVEAWAY! 🏆",
+                    description=f"🎁 Prize: **{giveaway['prize']}**\n\n✨ Congratulations, enjoy your reward!",
+                    color=0xFFD700  # Gold color
                 )
-                await w.send(banner)
-            except:
-                pass
+                embed.set_footer(text=f"Hosted by: {giveaway['host'].display_name}")
+                await w.send(embed=embed)
+            except discord.Forbidden:
+                print(f"Cannot DM {w.name}, they might have DMs disabled.")
     else:
         await giveaway["channel"].send("😢 No one joined the giveaway.")
 
@@ -113,21 +113,25 @@ async def reroll(interaction: discord.Interaction, message_id: str):
 
     winners = random.sample(users, min(len(users), giveaway["winners"]))
     win_mentions = ", ".join(w.mention for w in winners)
-    await giveaway["channel"].send(f"🔄 Reroll result: {win_mentions} won **{giveaway['prize']}** 🎁")
+    await giveaway["channel"].send(
+        f"🔄 Reroll result: {win_mentions} won **{giveaway['prize']}** 🎁"
+    )
 
-    # DM winners with banner
+    # DM winners with embed banner
     for w in winners:
         try:
-            banner = (
-                "━━━━━━━━━━━━━━━\n"
-                "🏆 **YOU WON THE GIVEAWAY (REROLL)!** 🏆\n\n"
-                f"🎁 Prize: **{giveaway['prize']}**\n\n"
-                "✨ Congratulations, enjoy your reward!\n"
-                "━━━━━━━━━━━━━━━"
+            embed = discord.Embed(
+                title="🏆 YOU WON THE GIVEAWAY (REROLL)! 🏆",
+                description=(
+                    f"🎁 Prize: **{giveaway['prize']}**\n\n"
+                    "✨ Congratulations, enjoy your reward!"
+                ),
+                color=0xFFD700  # Gold color
             )
-            await w.send(banner)
-        except:
-            pass
+            embed.set_footer(text=f"Hosted by: {user.name}")  # Host username
+            await w.send(embed=embed)
+        except discord.Forbidden:
+            print(f"Cannot DM {w.name}, they might have DMs disabled.")
 
     giveaway["winners_list"] = winners
 
@@ -154,25 +158,39 @@ async def giveaway_list(interaction: discord.Interaction):
     embed.add_field(name="Ended Giveaways", value=ended_text, inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-# ---------- REACTION EVENT ----------
+# Example command to test DM
+@bot.command()
+async def send_giveaway_dm(user: discord.User, giveaway_name: str, owner_name: str):
+    """Send a styled giveaway DM to the user"""
+    embed = discord.Embed(
+        title="🎉 Entry Approved! 🎉",
+        description=f"Your entry to **{giveaway_name}** has been approved!\nYou have a chance to win!!",
+        color=0x1ABC9C
+    )
+    embed.set_footer(text=f"Hosted by: {user.name}")
+
+    try:
+        await user.send(embed=embed)
+        print(f"Sent giveaway DM to {user.name}")
+    except discord.Forbidden:
+        print(f"Cannot send DM to {user.name}, they might have DMs disabled.")
+
+# ----- Track Reaction Joins -----
 @bot.event
 async def on_reaction_add(reaction, user):
     if user.bot:
         return
-    if reaction.message.id in active_giveaways and str(reaction.emoji) == "🎉":
-        try:
-            banner = (
-                "━━━━━━━━━━━━━━━\n"
-                "🎉 **Giveaway Entry Approved!** 🎉\n\n"
-                "✅ You have successfully joined the giveaway!\n"
-                "✨ All the best!\n"
-                "━━━━━━━━━━━━━━━"
-            )
-            await user.send(banner)
-        except:
-            pass
+    if reaction.emoji == "🎉":
+        await send_giveaway_dm(user, reaction.message.embeds[0].title, reaction.message.embeds[0].fields[0].value)
 
 # ---------- RUN ----------
-bot.run(TOKEN)
+if __name__ == "__main__":
+    if not TOKEN:
+        print("❌ Error: DISCORD_TOKEN environment variable not set!")
+        print("Please set your Discord bot token as an environment variable.")
+        exit(1)
+    
+    print("🚀 Starting Discord bot...")
+    bot.run(TOKEN)
 
 
