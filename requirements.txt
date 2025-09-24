@@ -1,1 +1,4 @@
 discord.py==2.3.2
+Flask==2.3.3   # or whatever version you use
+gunicorn==21.2.0
+
