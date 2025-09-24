@@ -1,5 +1,5 @@
 from flask import Flask
-app = Flask(__name__)
+app = Flask(__app__)
 
 @app.route('/')
 def home():
