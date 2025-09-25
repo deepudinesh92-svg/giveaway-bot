@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, Partials, EmbedBuilder, Collection } = require("discord.js");
 require("dotenv").config();
+console.log("Loaded token:", process.env.TOKEN ? "✅ Found" : "❌ Missing");
 
 const client = new Client({
     intents: [
@@ -205,5 +206,6 @@ client.on("ready", async () => {
 // ---------- RUN ----------
 require("dotenv").config();
 client.login(process.env.TOKEN);
+
 
 
