@@ -2,10 +2,10 @@
   "name": "giveaway-bot",
   "version": "1.0.0",
   "description": "A Discord Giveaway Bot with auto-end, pause/resume, reroll, and DM support.",
-  "main": "A.js",
+  "main": "dolby.js",
   "scripts": {
-    "start": "node A.js",
-    "dev": "nodemon A.js"
+    "start": "node dolby.js",
+    "dev": "nodemon dolby.js"
   },
   "author": "Antony",
   "license": "MIT",
@@ -19,3 +19,4 @@
     "nodemon": "^3.1.7"
   }
 }
+
